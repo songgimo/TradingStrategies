@@ -1,10 +1,16 @@
 from enum import Enum
 
-class MarketType(Enum):
+class StockMarketType(Enum):
     KOSPI = "KOSPI"
     KOSDAQ = "KOSDAQ"
     NASDAQ = "NASDAQ"
     NYSE = "NYSE"
+
+    def __str__(self):
+        return self.value
+
+    def __format__(self, format_spec):
+        return self.value
 
 
 class SectorType(Enum):
@@ -20,3 +26,20 @@ class SectorType(Enum):
     UTILITIES = "Utilities"
     REAL_ESTATE = "Real Estate"
 
+    def __str__(self):
+        return self.value
+
+    def __format__(self, format_spec):
+        return self.value
+
+
+class CryptoMarketType(Enum):
+    KOREAN_WON = "KRW"
+    BITCOIN = "BTC"
+    ETHEREUM = "ETH"
+
+    def __str__(self):
+        return self.value
+
+    def __format__(self, format_spec):
+        return self.value
