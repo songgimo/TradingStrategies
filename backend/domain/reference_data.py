@@ -43,3 +43,9 @@ class CryptoMarketType(Enum):
 
     def __format__(self, format_spec):
         return self.value
+
+
+class CryptoType(Enum):
+    STORE_OF_VALUE = "Store of Value" # Similar as an Index
+    SMART_CONTRACT = "Smart Contract" # Similar as a Technology
+    PAYMENT = "Payment"  # Similar as a Financials
