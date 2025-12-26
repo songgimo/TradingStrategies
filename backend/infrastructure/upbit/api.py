@@ -1,6 +1,8 @@
-from backend.domain.value_objects import Ticker
+from backend.domain.value_objects import Ticker, Symbol
 from config.config import settings
 from backend.application.ports.output import CryptoMarketOutputPort
+import pandas as pd
+
 
 
 class UpbitAPI(CryptoMarketOutputPort):
@@ -8,5 +10,5 @@ class UpbitAPI(CryptoMarketOutputPort):
     KEY = settings.upbit_key.get_secret_value()
     SECRET = settings.upbit_secret.get_secret_value()
 
-    def get_ticker(self, ) -> Ticker:
+    def get_candle_history(self, symbol: Symbol) -> pd.DataFrame:
         ...
