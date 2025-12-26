@@ -45,10 +45,34 @@ class TrendAndPerfectOrderSpec(TradingCondition):
 
 
 class RsiFastCrossOverSlowSpec(TradingCondition):
-    def __init__(self, config: StrategyConfig):
-        self.__config = config
-
     def is_satisfied_by(self, ctx: MarketContext) -> bool:
         if ctx.rsi is None:
             return False
         return ctx.rsi.fast_cross_over_slow
+
+
+class RsiOverSoldSpec(TradingCondition):
+    def is_satisfied_by(self, ctx: MarketContext) -> bool:
+        if ctx.rsi is None:
+            return False
+
+        threshold = 30
+        return ctx.rsi.is_rsi_oversold(threshold)
+
+
+class RsiOverBoughtSpec(TradingCondition):
+    def is_satisfied_by(self, ctx: MarketContext) -> bool:
+        if ctx.rsi is None:
+            return False
+
+        threshold = 70
+        return ctx.rsi.is_rsi_overbought(threshold)
+
+
+class RsiSharpDropSpec(TradingCondition):
+    def is_satisfied_by(self, ctx: MarketContext) -> bool:
+        if ctx.rsi is None:
+            return False
+
+        threshold = 10
+        return ctx.rsi.has_the_stock_dropped_sharply(threshold)

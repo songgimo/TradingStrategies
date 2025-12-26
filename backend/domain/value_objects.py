@@ -73,6 +73,7 @@ class DataOHLCV:
     volume: float
     timestamp: int
 
+
 @dataclass(frozen=True)
 class Ticker:
     symbol: Symbol
@@ -114,6 +115,15 @@ class RSIResult:
     def fast_cross_over_slow(self) -> bool:
         return self.rsi_14 < self.rsi_9
 
+    def is_rsi_oversold(self, threshold) -> bool:
+        return self.rsi_14 < threshold
+
+    def is_rsi_overbought(self, threshold) -> bool:
+        return self.rsi_14 > threshold
+
+    def has_the_stock_dropped_sharply(self, threshold):
+        return self.rsi_2 < threshold
+
 
 @dataclass(frozen=True)
 class MarketContext:
@@ -126,3 +136,16 @@ class MarketContext:
 class StrategyConfig:
     rsi_oversold_limit: float = 30.0
     rsi_overbought_limit: float = 70.0
+    sharp_drop_limit: float = 10.0
+
+    def __post_init__(self):
+        if self.rsi_oversold_limit > 50.0:
+            raise ValueError(f"Oversold limit ({self.rsi_oversold_limit}) cannot be > 50.")
+        if self.rsi_overbought_limit < 50.0:
+            raise ValueError(f"Overbought limit ({self.rsi_overbought_limit}) cannot be < 50.")
+        if self.sharp_drop_limit < 0.0 or self.sharp_drop_limit > 10.0:
+            raise ValueError(f"Sharp drop limit ({self.sharp_drop_limit}) must be between 0 and 10.")
+        # 2. Cross-Field Validation (Optional but safe)
+        if self.rsi_oversold_limit >= self.rsi_overbought_limit:
+            raise ValueError("Oversold limit must be lower than Overbought limit.")
+
