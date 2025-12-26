@@ -78,3 +78,24 @@ class Ticker:
     price: float
     timestamp: int
 
+
+@dataclass(frozen=True)
+class EMAResult:
+    ema_20: float
+    ema_60: float
+    ema_120: float
+
+    @property
+    def is_prefect_order(self):
+        return self.ema_20 > self.ema_60 > self.ema_120
+
+
+@dataclass(frozen=True)
+class SMAResult:
+    sma_20: float
+    sma_60: float
+    sma_120: float
+
+    @property
+    def is_a_trend_market(self):
+        return self.sma_20 > self.sma_120
