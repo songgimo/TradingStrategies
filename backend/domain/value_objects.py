@@ -1,24 +1,7 @@
 from dataclasses import dataclass
-from backend.domain.reference_data import CryptoMarketType
+from backend.domain.reference_data import CryptoMarketType, StockMarketType, SectorType
 import typing
 import re
-
-
-@dataclass(frozen=True)
-class DataOHLCV:
-    date: str
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: float
-
-
-@dataclass(frozen=True)
-class Ticker:
-    market: str
-    price: float
-    timestamp: int
 
 
 @dataclass(frozen=True)
@@ -37,15 +20,58 @@ class CryptoName:
 
 
 @dataclass(frozen=True)
+class Symbol:
+    symbol: str
+    description: str
+
+
+
+@dataclass(frozen=True)
 class TradingPair:
     name: str
     market: typing.Optional[CryptoMarketType]
 
     def make_symbol(self, market_base=False):
-        if self.name is None:
-            raise ValueError("Currency name is not valid")
-        elif self.market is None:
-            raise ValueError("Market name is not valid")
+        if market_base:
+            # KRW --> BTC = KRWBTC
+            return Symbol(
+                symbol=f"{self.market}{self.name}" if market_base else f"{self.name}{self.market}",
+                description=f"{self.market} --> {self.name}",
+            )
+        else:
+            # BTC --> KRW = BTCKRW
+            return Symbol(
+                symbol=f"{self.name}{self.market}",
+                description=f"{self.name} --> {self.market}",
+            )
 
-        # KRW --> BTC = KRWBTC || BTC --> KRW = BTCKRW
-        return f"{self.market}{self.name}" if market_base else f"{self.name}{self.market}"
+
+@dataclass(frozen=True)
+class Stock:
+    name: str
+    code: str
+    market: typing.Optional[StockMarketType]
+    sector: typing.Optional[SectorType]
+
+    def make_symbol(self):
+        return Symbol(
+            symbol=self.code,
+            description=f"{self.name} ({self.code}), ({self.market}), ({self.sector})"
+        )
+
+
+@dataclass(frozen=True)
+class DataOHLCV:
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    timestamp: int
+
+@dataclass(frozen=True)
+class Ticker:
+    symbol: Symbol
+    price: float
+    timestamp: int
+
