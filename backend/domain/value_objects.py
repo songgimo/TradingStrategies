@@ -25,23 +25,26 @@ class Symbol:
     description: str
 
 
-
 @dataclass(frozen=True)
 class TradingPair:
     name: str
     market: typing.Optional[CryptoMarketType]
 
-    def make_symbol(self, market_base=False):
+    def make_symbol(self, market_base=False, splitter=None):
+        if splitter is None:
+            splitter = ""
+
+        symbol = f"{self.market}{splitter}{self.name}" if market_base else f"{self.name}{splitter}{self.market}"
         if market_base:
-            # KRW --> BTC = KRWBTC
+            # KRW --> BTC = KRW|BTC
             return Symbol(
-                symbol=f"{self.market}{self.name}" if market_base else f"{self.name}{self.market}",
+                symbol=symbol,
                 description=f"{self.market} --> {self.name}",
             )
         else:
-            # BTC --> KRW = BTCKRW
+            # BTC --> KRW = BTC|KRW
             return Symbol(
-                symbol=f"{self.name}{self.market}",
+                symbol=symbol,
                 description=f"{self.name} --> {self.market}",
             )
 
