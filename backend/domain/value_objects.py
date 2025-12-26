@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
+
 from backend.domain.reference_data import CryptoMarketType, StockMarketType, SectorType
-import typing
 import re
 
 
@@ -28,9 +29,9 @@ class Symbol:
 @dataclass(frozen=True)
 class TradingPair:
     name: str
-    market: typing.Optional[CryptoMarketType]
+    market: Optional[CryptoMarketType]
 
-    def make_symbol(self, market_base=False, splitter=None):
+    def make_symbol(self, market_base=False, splitter=None) -> Symbol:
         if splitter is None:
             splitter = ""
 
@@ -53,8 +54,8 @@ class TradingPair:
 class Stock:
     name: str
     code: str
-    market: typing.Optional[StockMarketType]
-    sector: typing.Optional[SectorType]
+    market: Optional[StockMarketType]
+    sector: Optional[SectorType]
 
     def make_symbol(self):
         return Symbol(
@@ -86,7 +87,7 @@ class EMAResult:
     ema_120: float
 
     @property
-    def is_prefect_order(self):
+    def is_perfect_order(self) -> bool:
         return self.ema_20 > self.ema_60 > self.ema_120
 
 
@@ -97,5 +98,31 @@ class SMAResult:
     sma_120: float
 
     @property
-    def is_a_trend_market(self):
+    def is_a_trend_market(self) -> bool:
         return self.sma_20 > self.sma_120
+
+
+@dataclass(frozen=True)
+class RSIResult:
+    rsi_2: float
+    rsi_7: float
+    rsi_9: float
+    rsi_14: float
+    rsi_50: float
+
+    @property
+    def fast_cross_over_slow(self) -> bool:
+        return self.rsi_14 < self.rsi_9
+
+
+@dataclass(frozen=True)
+class MarketContext:
+    sma: Optional[SMAResult] = None
+    ema: Optional[EMAResult] = None
+    rsi: Optional[RSIResult] = None
+
+
+@dataclass(frozen=True)
+class StrategyConfig:
+    rsi_oversold_limit: float = 30.0
+    rsi_overbought_limit: float = 70.0
