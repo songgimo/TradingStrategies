@@ -5,7 +5,7 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     app_name: str = "StockTrader"
 
-    # 1. Base settings
+    # 1. DB Settings
     db_host: str
     db_user: str
 
@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     upbit_secret: SecretStr
 
     db_password: SecretStr
+
+    # 3. Celery Settings
+    celery_broker_url: str
+    celery_result_backend_url: str
+
 
     model_config = SettingsConfigDict(
         env_file=".env",
