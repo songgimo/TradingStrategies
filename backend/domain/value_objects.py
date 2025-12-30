@@ -25,6 +25,15 @@ class Symbol:
     symbol: str
     description: str
 
+    def __str__(self):
+        return self.symbol
+
+    def __format__(self, format_spec):
+        return self.symbol
+
+    def __repr__(self) -> str:
+        return f"Symbol(symbol='{self.symbol}', description='{self.description}')"
+
 
 @dataclass(frozen=True)
 class TradingPair:

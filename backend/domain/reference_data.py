@@ -64,3 +64,6 @@ class Interval(Enum):
 
     def __str__(self):
         return self.value
+
+    def __format__(self, format_spec):
+        return self.value
