@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     celery_broker_url: str
     celery_result_backend_url: str
 
+    environment: str = "development"
 
     model_config = SettingsConfigDict(
         env_file=".env",

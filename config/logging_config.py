@@ -3,13 +3,16 @@ import sys
 from pathlib import Path
 
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from config import Settings
 
 
-def setup_logging(env: str = "development"):
+def setup_logging():
     """
     Args:
         env: 'development', 'staging', 'production'
     """
+
+    env = Settings.environment
 
     log_dir = Path("./logs")
     log_dir.mkdir(exist_ok=True)
@@ -102,3 +105,5 @@ def setup_logging(env: str = "development"):
         root_logger.addHandler(json_handler)
 
     logging.info(f"Logging configured for {env} environment")
+
+setup_logging()
