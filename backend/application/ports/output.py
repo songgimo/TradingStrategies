@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from backend.domain.value_objects import Ticker, Stock, DataOHLCV, Symbol
+from backend.domain.value_objects import Symbol, StockMarketType
 from backend.domain.reference_data import Interval
-import typing
 import pandas as pd # Pragmatic exception!
-from datetime import date
+from typing import List
 
 
 class MarketOutputPort(ABC):
@@ -13,4 +12,8 @@ class MarketOutputPort(ABC):
 
     @abstractmethod
     def get_candle_history(self, target: Symbol, interval: Interval, count: int = 200) -> pd.DataFrame:
+        ...
+
+    @abstractmethod
+    def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 200) -> pd.DataFrame:
         ...
