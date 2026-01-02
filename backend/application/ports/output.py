@@ -15,5 +15,18 @@ class MarketOutputPort(ABC):
         ...
 
     @abstractmethod
-    def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 200) -> pd.DataFrame:
+    def get_candles_last_day_history(self, targets: List[Symbol], market: StockMarketType) -> pd.DataFrame:
+        """
+            1 day candle only supported.
+        """
+        ...
+
+    @abstractmethod
+    def get_all_symbols(self, market_type: StockMarketType):
+        ...
+
+
+class DatabaseOutputPort(ABC):
+    @abstractmethod
+    def put_ohlcv_to_database(self, data: pd.DataFrame):
         ...
