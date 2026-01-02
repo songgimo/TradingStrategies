@@ -23,7 +23,7 @@ class CryptoName:
 @dataclass(frozen=True)
 class Symbol:
     symbol: str
-    description: str
+    description: Optional[str] = None
 
     def __str__(self):
         return self.symbol

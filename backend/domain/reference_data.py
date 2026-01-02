@@ -5,6 +5,7 @@ class StockMarketType(Enum):
     KOSDAQ = "KOSDAQ"
     NASDAQ = "NASDAQ"
     NYSE = "NYSE"
+    CRYPTO = "CRYPTO"
 
     def __str__(self):
         return self.value
