@@ -1,5 +1,11 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
+from pathlib import Path
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_FOLDER_PATH = BASE_DIR / "statics"
+SQLITE_DB_FOLDER_PATH = BASE_DIR / "database"
 
 
 class Settings(BaseSettings):
@@ -22,10 +28,8 @@ class Settings(BaseSettings):
 
     environment: str = "development"
 
-    json_file_path: str = "../statics"
-
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8"
     )
 
