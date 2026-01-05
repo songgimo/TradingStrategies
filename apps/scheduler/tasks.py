@@ -1,4 +1,6 @@
 import logging
+import asyncio
+
 from apps.scheduler.celery_app import celery_app
 from backend.application import app_services
 from backend.domain.reference_data import StockMarketType, Interval
@@ -50,7 +52,7 @@ def collect_daily_news(self):
             GoogleNews(),
             SQLiteDatabase()
         )
-        service.execute()
+        asyncio.run(service.execute())
 
         logger.info(f"[Task {task_id}] News collection completed successfully.")
 

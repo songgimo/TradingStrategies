@@ -43,6 +43,6 @@ class CollectNewsService:
     news_crawler_port: NewsCrawlerOutputPort
     database_port: DatabaseOutputPort
 
-    def execute(self):
-        news = self.news_crawler_port.fetch_news()
+    async def execute(self):
+        news = await self.news_crawler_port.fetch_news()
         self.database_port.insert_news(news)

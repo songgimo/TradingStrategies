@@ -39,5 +39,5 @@ class DatabaseOutputPort(ABC):
 
 class NewsCrawlerOutputPort(ABC):
     @abstractmethod
-    def fetch_news(self):
+    async def fetch_news(self):
         ...

@@ -77,7 +77,6 @@ class SQLiteDatabase(DatabaseOutputPort):
                     n.sentiment_score
                 ))
 
-            # 3. 대량 삽입 (INSERT OR IGNORE: ID 중복 시 에러 없이 건너뜀)
             cursor.executemany('''
                 INSERT OR IGNORE INTO news (
                     id, title, content, published_at, source, url, 
