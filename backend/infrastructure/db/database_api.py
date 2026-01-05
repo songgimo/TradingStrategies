@@ -1,41 +1,94 @@
 import sqlite3
 import pandas as pd
-from datetime import date
-from backend.application.ports import input, output
-from backend.domain.reference_data import StockMarketType
-from backend.domain.value_objects import Symbol
+import json
+
+from typing import List
+from backend.application.ports.output import DatabaseOutputPort
+from backend.domain.entities import News
+from config.config import SQLITE_DB_FOLDER_PATH
 
 
+class SQLiteDatabase(DatabaseOutputPort):
+    SQLITE_PATH = SQLITE_DB_FOLDER_PATH / "main.db"
+    def put_ohlcv_to_database(self, data: pd.DataFrame):
+        if data.empty:
+            return
 
-class SQLiteDB(output.StockMarketOutputPort):
-    TABLE_STOCK = "stock_info"
-    TABLE_REPORT = "financial_reports"
-    def __init__(self, con):
-        self.__con = con
+        for col in ['candle_date_time', 'symbol', 'market_type', 'interval']:
+            if col in data.columns:
+                data[col] = data[col].astype(str)
 
-    def get_stock_reports(self, target: Symbol, start: date, end: date) -> pd.DataFrame:
-        # 3. SQL 쿼리 실행 결과를 pandas 데이터프레임으로 바로 로드
-        df = pd.read_sql_query(
-            sql=f"SELECT * FROM {self.TABLE_REPORT} WHERE symbol = ? ORDER BY bsns_year",
-            con=self.__con,
-            params=[target.symbol]
-        )
+        db_columns = [
+            'symbol', 'market_type', 'interval', 'candle_date_time',
+            'open_price', 'high_price', 'low_price', 'close_price', 'volume'
+        ]
+        # Select only columns present in the DataFrame
+        columns_to_insert = [c for c in db_columns if c in data.columns]
 
-        return df
+        if not columns_to_insert:
+            return
 
-    def get_candle_history(self, target: Symbol, start: date, end: date) -> pd.DataFrame:
+        conn = sqlite3.connect(self.SQLITE_PATH)
+        cursor = conn.cursor()
+        
+        try:
+            placeholders = ', '.join(['?'] * len(columns_to_insert))
+            columns_str = ', '.join(columns_to_insert)
+            
+            # INSERT OR REPLACE handles the Primary Key constraint (stock_code, interval, candle_date_time)
+            sql = f"INSERT OR REPLACE INTO ohlcv_candles ({columns_str}) VALUES ({placeholders})"
+            
+            # Convert DataFrame to list of tuples ensuring column order
+            values = [tuple(x) for x in data[columns_to_insert].to_numpy()]
+            
+            cursor.executemany(sql, values)
+            conn.commit()
+        except Exception as e:
+            print(f"Failed to insert OHLCV data: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def insert_news(self, news_list: List[News]):
         """
-        Fetch OHLCV Candle History
-
-        Args:
-            target: The Value Object
-            start: Python date object
-            end: Python date object
+            뉴스 리스트를 DB에 저장 (중복 ID는 무시)
         """
-        df = pd.read_sql_query(
-            sql=f"SELECT * FROM {self.TABLE_STOCK} WHERE symbol = ? AND date BETWEEN ? AND ? ORDER BY date",
-            con=self.__con,
-            params=[target.symbol, start, end]
-        )
+        if not news_list:
+            return
 
-        return df
+        conn = sqlite3.connect(self.SQLITE_PATH)
+        cursor = conn.cursor()
+
+        try:
+            data_to_insert = []
+            for n in news_list:
+                stocks_str = json.dumps([str(s) for s in n.related_stocks]) if n.related_stocks else "[]"
+                sectors_str = json.dumps(n.related_sectors) if n.related_sectors else "[]"
+
+                data_to_insert.append((
+                    n.id,
+                    n.title,
+                    n.content,
+                    n.published_at,
+                    n.source,
+                    n.url,
+                    stocks_str,
+                    sectors_str,
+                    n.sentiment_score
+                ))
+
+            # 3. 대량 삽입 (INSERT OR IGNORE: ID 중복 시 에러 없이 건너뜀)
+            cursor.executemany('''
+                INSERT OR IGNORE INTO news (
+                    id, title, content, published_at, source, url, 
+                    related_stocks, related_sectors, sentiment_score
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', data_to_insert)
+
+            conn.commit()
+
+        except Exception as e:
+            print(f"Failed to insert news: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
