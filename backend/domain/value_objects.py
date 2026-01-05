@@ -60,20 +60,6 @@ class TradingPair:
 
 
 @dataclass(frozen=True)
-class Stock:
-    name: str
-    code: str
-    market: Optional[StockMarketType]
-    sector: Optional[SectorType]
-
-    def make_symbol(self):
-        return Symbol(
-            symbol=self.code,
-            description=f"{self.name} ({self.code}), ({self.market}), ({self.sector})"
-        )
-
-
-@dataclass(frozen=True)
 class DataOHLCV:
     open: float
     high: float
