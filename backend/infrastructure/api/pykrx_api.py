@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class PykrxAPI(MarketOutputPort):
     _ENG_COLUMNS = {
         '시가': 'open_price', '고가': 'high_price', '저가': 'low_price',
-        '종가': 'close_price', '거래량': 'volume'
+        '종가': 'close_price', '거래량': 'volume', "등락률": "change", "티커": "symbol"
     }
     _INTERVAL_MAP = {
         Interval.DAY: 'd',
@@ -40,11 +40,14 @@ class PykrxAPI(MarketOutputPort):
             ohlcv_df = pd.concat([ohlcv_df, result])
             if len(ohlcv_df) >= count:
                 break
+            if ohlcv_df.empty:
+                logger.error(f"The target is not available symbol: {target}")
+                return pd.DataFrame()
             to_date = from_date
 
         ohlcv_df.index.name = 'candle_date_time'
-        df = ohlcv_df.sort_index(ascending=False).tail(count)
-        df.rename(columns=self._ENG_COLUMNS, inplace=True)
+        df = ohlcv_df.sort_index(ascending=False).tail(count).rename(columns=self._ENG_COLUMNS).assign(interval=str(Interval.DAY), symbol=str(target))
+        df.reset_index(inplace=True)
         return df
 
     def get_candles_last_day_history(self, targets: List[Symbol], market: StockMarketType) -> pd.DataFrame:
@@ -61,10 +64,13 @@ class PykrxAPI(MarketOutputPort):
                 break
 
             to_date = from_date
-        ohlcv_df.drop(columns=["거래대금", "등락률", "시가총액"], inplace=True)
-        ohlcv_df.index.name = 'stock_code'
+        ohlcv_df.drop(columns=["거래대금", "시가총액"], inplace=True)
         ohlcv_df.rename(columns=self._ENG_COLUMNS, inplace=True)
+        ohlcv_df.assign(interval=str(Interval.DAY), candle_date_time=to_date.strftime("%Y-%m-%d"))
         return ohlcv_df
+
+    def get_ticker_list(self, market: StockMarketType):
+        return stock.get_market_ticker_list(market=str(market))
 
     def get_all_symbols(self, market_type: StockMarketType):
         ...
