@@ -3,6 +3,9 @@ from apps.scheduler.celery_app import celery_app
 from backend.application import app_services
 from backend.domain.reference_data import StockMarketType, Interval
 from backend.infrastructure.api.pykrx_api import PykrxAPI
+from backend.infrastructure.db.database_api import SQLiteDatabase
+from celery.exceptions import MaxRetriesExceededError
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,16 +19,21 @@ def collect_kospi_stock_ohlcv(self):
     logger.info(f"[Task {self.request.id}] Starting KOSPI data collection")
 
     try:
-        market_port = PykrxAPI()
+        app_services.CollectMarketDataService(
+            market_port=PykrxAPI(),
+            database_port=SQLiteDatabase(),
+            market=StockMarketType.KOSPI
+        ).execute()
 
-        market_data_service = app_services.MarketDataService(
-            market_port,
-        )
+        logger.info(f"[Task {self.request.id}] Successfully completed.")
+    except Exception as ex:
+        logger.error(f"[Task {self.request.id}] Failed to collect data: {ex}", exc_info=True)
+        try:
+            raise self.retry(exc=ex)
 
-        return market_data_service.collecting_ohlcv(
-            interval=Interval.DAY,
-            count=200
-        )
+        except MaxRetriesExceededError:
+            logger.critical(f"[Task {self.request.id}] MAX RETRIES EXCEEDED. Alerting Admin...")
 
-    except:
-        ...
+
+if __name__ == '__main__':
+    collect_kospi_stock_ohlcv()
