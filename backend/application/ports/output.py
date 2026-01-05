@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from backend.domain.value_objects import Symbol, StockMarketType
 from backend.domain.reference_data import Interval
+from backend.domain.entities import News
 import pandas as pd # Pragmatic exception!
 from typing import List
 
@@ -29,6 +30,10 @@ class MarketOutputPort(ABC):
 class DatabaseOutputPort(ABC):
     @abstractmethod
     def put_ohlcv_to_database(self, data: pd.DataFrame):
+        ...
+
+    @abstractmethod
+    def insert_news(self, news: List[News]):
         ...
 
 

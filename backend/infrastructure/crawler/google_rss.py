@@ -9,7 +9,7 @@ from config.config import STATIC_FOLDER_PATH
 from backend.application.ports.output import NewsCrawlerOutputPort
 
 
-class GoogleNewsRSS(NewsCrawlerOutputPort):
+class GoogleNews(NewsCrawlerOutputPort):
     def __init__(self):
         self._rss_urls = self.load_rss_urls()["GOOGLE"]
 
@@ -48,5 +48,5 @@ class GoogleNewsRSS(NewsCrawlerOutputPort):
 
 
 if __name__ == '__main__':
-    crawler = GoogleNewsRSS()
+    crawler = GoogleNews()
     crawler.fetch_news()
