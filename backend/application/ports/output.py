@@ -30,3 +30,9 @@ class DatabaseOutputPort(ABC):
     @abstractmethod
     def put_ohlcv_to_database(self, data: pd.DataFrame):
         ...
+
+
+class NewsCrawlerOutputPort(ABC):
+    @abstractmethod
+    def fetch_news(self):
+        ...
