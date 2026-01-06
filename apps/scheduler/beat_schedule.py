@@ -8,6 +8,6 @@ BEAT_SCHEDULE = {
     },
     "hourly-news-update": {
         "task": "apps.scheduler.tasks.collect_daily_news",
-        "schedule": crontab(hours=8, minute=0),
+        "schedule": crontab(hour=8, minute=0),
     },
 }
