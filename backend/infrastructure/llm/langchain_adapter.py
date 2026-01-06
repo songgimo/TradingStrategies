@@ -2,17 +2,18 @@ import json
 from typing import List
 from datetime import datetime
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_huggingface import ChatHuggingFace
 
+from backend.application.app_services import logger
 from backend.application.ports.output import LLMOutputPort
 from backend.domain.entities import MarketAnalysis
 from backend.infrastructure.llm.schemas import MarketAnalysisSchema
 from backend.infrastructure.llm.prompts import create_analyst_prompt
+from backend.infrastructure.llm.clients import LLMClients
 
 
 class LangChainAdapter(LLMOutputPort):
     def __init__(self):
-        self.llm = ChatHuggingFace(model_id="meta-llama/Llama-3-8b")
+        self.llm = LLMClients.google_llm_client(temperature=0.0)
 
         self.parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
 
@@ -40,7 +41,7 @@ class LangChainAdapter(LLMOutputPort):
             )
 
         except Exception as e:
-            print(f"LangChain Analysis Failed: {e}")
+            logger.error(f"LangChain Analysis Failed: {e}")
             return MarketAnalysis(
                 date=datetime.now().strftime("%Y-%m-%d"),
                 sentiment_score=0.0,

@@ -14,13 +14,14 @@ class Settings(BaseSettings):
     # 1. DB Settings
     db_host: str
     db_user: str
+    db_password: SecretStr
 
     # 2. Important key settings
     open_dart_key: SecretStr
     upbit_key: SecretStr
     upbit_secret: SecretStr
 
-    db_password: SecretStr
+    google_api_key: SecretStr
 
     # 3. Celery Settings
     celery_broker_url: str
