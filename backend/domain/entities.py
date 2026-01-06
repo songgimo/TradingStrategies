@@ -31,3 +31,16 @@ class Stock:
     market: str
     sector: str
     financials: dict = None
+
+
+@dataclass
+class MarketAnalysis:
+    date: str
+
+    sentiment_score: float
+    summary: str
+    primary_sectors: List[str]
+    reasons: str
+
+    thought_process: Optional[str] = None
+    cited_news_ids: List[str] = field(default_factory=list)

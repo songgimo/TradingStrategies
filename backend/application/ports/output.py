@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from backend.domain.value_objects import Symbol, StockMarketType
 from backend.domain.reference_data import Interval
 from backend.domain.entities import News
@@ -41,3 +42,11 @@ class NewsCrawlerOutputPort(ABC):
     @abstractmethod
     async def fetch_news(self):
         ...
+
+
+class LLMOutputPort(ABC):
+    @abstractmethod
+    async def analyze_market(self, news_contents: List[str]) -> "MarketAnalysis":
+        """
+            Return MarketAnalysis
+        """
