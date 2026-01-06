@@ -14,11 +14,11 @@ class MarketOutputPort(ABC):
     SECRET: str
 
     @abstractmethod
-    def get_candle_history(self, target: Symbol, interval: Interval, count: int = 200) -> pd.DataFrame:
+    async def get_candle_history(self, target: Symbol, interval: Interval, count: int = 200) -> pd.DataFrame:
         ...
 
     @abstractmethod
-    def get_candles_last_day_history(self, targets: List[Symbol], market: StockMarketType) -> pd.DataFrame:
+    async def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1) -> pd.DataFrame:
         """
             1 day candle only supported.
         """

@@ -27,7 +27,7 @@ def collect_kospi_stock_ohlcv(self):
             PykrxAPI(),
             SQLiteDatabase(),
         )
-        service.execute(StockMarketType.KOSPI)
+        asyncio.run(service.execute(StockMarketType.KOSPI))
 
         logger.info(f"[Task {self.request.id}] Successfully completed.")
     except Exception as ex:

@@ -1,8 +1,12 @@
 import logging
+import json
+import asyncio
 from dataclasses import dataclass
 
 from backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort
 from backend.domain.reference_data import Interval, StockMarketType
+from backend.domain.value_objects import Symbol
+from config.config import STATIC_FOLDER_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +24,20 @@ class CollectMarketDataService:
     market_port: MarketOutputPort
     database_port: DatabaseOutputPort
 
-    def execute(self, market: StockMarketType):
-        if market in [StockMarketType.KOSPI, StockMarketType.KOSDAQ]:
-            history_data = self.market_port.get_candles_last_day_history(
-                [],
-                market
-            )
-
+    async def execute(self, market: StockMarketType, interval: Interval = Interval.DAY, count: int = 1):
+        if market in [StockMarketType.KOSPI]:
+            with open(STATIC_FOLDER_PATH / "kospi_200_codes.json", "r") as f:
+                codes = json.loads(f.read())
         else:
             raise ValueError(
                 f"Unsupported market type: {market}"
             )
+        symbols = [Symbol(code) for code in codes]
+        data = await self.market_port.get_candles_history(symbols, interval, count)
+        print(data)
+        # self.database_port.get_ohlcv_data()
 
-        self.database_port.put_ohlcv_to_database(history_data)
+        # self.database_port.put_ohlcv_to_database(result)
 
 
 @dataclass

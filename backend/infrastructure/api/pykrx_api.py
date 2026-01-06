@@ -1,3 +1,5 @@
+import asyncio
+import random
 from pykrx import stock
 import pandas as pd
 import datetime
@@ -21,7 +23,7 @@ class PykrxAPI(MarketOutputPort):
         Interval.MONTH: 'm'
     }
 
-    def get_candle_history(self, target: Symbol, interval: Interval, count: int = 1) -> pd.DataFrame:
+    async def get_candle_history(self, target: Symbol, interval: Interval, count: int = 1) -> pd.DataFrame:
         logger.info(f"Fetching candle history: ticker={target}, interval={interval}, count={count}")
         freq = self._INTERVAL_MAP.get(interval)
         if not freq:
@@ -36,11 +38,18 @@ class PykrxAPI(MarketOutputPort):
             from_str, to_str = from_date.strftime("%Y%m%d"), to_date.strftime("%Y%m%d")
 
             logger.debug(f"Fetching candle history from {from_str} to {to_str}")
-            result = stock.get_market_ohlcv(from_str, to_str, str(target), freq)
+            result = await asyncio.to_thread(
+                stock.get_market_ohlcv,
+                from_str,
+                to_str,
+                str(target),
+                freq
+
+            )
             ohlcv_df = pd.concat([ohlcv_df, result])
             if len(ohlcv_df) >= count:
                 break
-            if ohlcv_df.empty:
+            if ohlcv_df.empty and result.empty:
                 logger.error(f"The target is not available symbol: {target}")
                 return pd.DataFrame()
             to_date = from_date
@@ -50,24 +59,27 @@ class PykrxAPI(MarketOutputPort):
         df.reset_index(inplace=True)
         return df
 
-    def get_candles_last_day_history(self, targets: List[Symbol], market: StockMarketType) -> pd.DataFrame:
-        logger.info(f"Fetching candle history: ticker={targets}")
-        to_date = datetime.datetime.now()
-        ohlcv_df = pd.DataFrame()
+    async def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1):
+        sem = asyncio.Semaphore(5)
+        async def _fetch_wrapper(target):
+            async with sem:
+                await asyncio.sleep(random.uniform(0.1, 0.5))
+                try:
+                    return await self.get_candle_history(target, interval, count)
+                except Exception as e:
+                    logger.error(f"Failed to fetch {target}: {e}")
+                    return pd.DataFrame()
 
-        for _ in range(10):
-            from_date = to_date - datetime.timedelta(days=1)
-            from_str, to_str = from_date.strftime("%Y%m%d"), to_date.strftime("%Y%m%d")
-            data = stock.get_market_ohlcv(date=from_str, market=str(market))
-            if data.iloc[-1].values[-1] != 0:
-                ohlcv_df = data
-                break
+        tasks = [_fetch_wrapper(target) for target in targets]
 
-            to_date = from_date
-        ohlcv_df.drop(columns=["거래대금", "시가총액"], inplace=True)
-        ohlcv_df.rename(columns=self._ENG_COLUMNS, inplace=True)
-        ohlcv_df.assign(interval=str(Interval.DAY), candle_date_time=to_date.strftime("%Y-%m-%d"))
-        return ohlcv_df
+        results = await asyncio.gather(*tasks)
+
+        valid_dfs = [df for df in results if not df.empty]
+
+        if not valid_dfs:
+            return pd.DataFrame()
+
+        return pd.concat(valid_dfs, ignore_index=True)
 
     def get_all_symbols(self, market_type: StockMarketType):
         ...
