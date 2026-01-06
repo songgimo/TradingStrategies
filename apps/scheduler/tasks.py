@@ -2,7 +2,7 @@ import logging
 import asyncio
 
 from apps.scheduler.celery_app import celery_app
-from backend.application import app_services
+from backend.application import scheduler_services
 from backend.domain.reference_data import StockMarketType, Interval
 from backend.infrastructure.api.pykrx_api import PykrxAPI
 from backend.infrastructure.crawler.google_rss import GoogleNews
@@ -23,7 +23,7 @@ def collect_kospi_stock_ohlcv(self):
     logger.info(f"[Task {self.request.id}] Starting KOSPI data collection")
 
     try:
-        service = app_services.CollectMarketDataService(
+        service = scheduler_services.CollectMarketDataService(
             PykrxAPI(),
             SQLiteDatabase(),
         )
@@ -48,7 +48,7 @@ def collect_daily_news(self):
     logger.info(f"[Task {task_id}] Starting Daily News collection")
 
     try:
-        service = app_services.CollectNewsService(
+        service = scheduler_services.CollectNewsService(
             GoogleNews(),
             SQLiteDatabase()
         )
