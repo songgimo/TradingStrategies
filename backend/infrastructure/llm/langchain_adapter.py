@@ -1,19 +1,22 @@
 import json
+import logging
 from typing import List
 from datetime import datetime
 from langchain_core.output_parsers import JsonOutputParser
 
-from backend.application.app_services import logger
+
 from backend.application.ports.output import LLMOutputPort
 from backend.domain.entities import MarketAnalysis
 from backend.infrastructure.llm.schemas import MarketAnalysisSchema
 from backend.infrastructure.llm.prompts import create_analyst_prompt
 from backend.infrastructure.llm.clients import LLMClients
 
+logger = logging.getLogger(__name__)
+
 
 class LangChainAdapter(LLMOutputPort):
     def __init__(self):
-        self.llm = LLMClients.google_llm_client(temperature=0.0)
+        self.llm = LLMClients.google_llm_client(temperature=0.3)
 
         self.parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
 
