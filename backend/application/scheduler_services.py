@@ -1,8 +1,5 @@
 import logging
 from dataclasses import dataclass
-from typing import List
-
-import pandas as pd
 
 from backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort
 from backend.domain.reference_data import Interval, StockMarketType

@@ -46,7 +46,7 @@ class PykrxAPI(MarketOutputPort):
             to_date = from_date
 
         ohlcv_df.index.name = 'candle_date_time'
-        df = ohlcv_df.sort_index(ascending=False).tail(count).rename(columns=self._ENG_COLUMNS).assign(interval=str(Interval.DAY), symbol=str(target))
+        df = ohlcv_df.sort_index(ascending=False).head(count).rename(columns=self._ENG_COLUMNS).assign(interval=str(Interval.DAY), symbol=str(target))
         df.reset_index(inplace=True)
         return df
 
@@ -68,9 +68,6 @@ class PykrxAPI(MarketOutputPort):
         ohlcv_df.rename(columns=self._ENG_COLUMNS, inplace=True)
         ohlcv_df.assign(interval=str(Interval.DAY), candle_date_time=to_date.strftime("%Y-%m-%d"))
         return ohlcv_df
-
-    def get_ticker_list(self, market: StockMarketType):
-        return stock.get_market_ticker_list(market=str(market))
 
     def get_all_symbols(self, market_type: StockMarketType):
         ...
