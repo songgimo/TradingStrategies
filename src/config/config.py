@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     celery_broker_url: str
     celery_result_backend_url: str
 
+    # 4. LangSmith Settings
+    lang_smith_api_key: str
+
     environment: str = "development"
 
     model_config = SettingsConfigDict(
