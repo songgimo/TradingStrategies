@@ -1,5 +1,5 @@
 from celery import Celery
-from config.config import settings
+from src.config.config import settings
 
 
 celery_app = Celery(
@@ -17,5 +17,5 @@ celery_app.conf.update(
     result_serializer="json",
 )
 
-from apps.scheduler.beat_schedule import BEAT_SCHEDULE
+from src.apps.scheduler.beat_schedule import BEAT_SCHEDULE
 celery_app.conf.beat_schedule = BEAT_SCHEDULE

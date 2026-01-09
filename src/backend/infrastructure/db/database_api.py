@@ -3,9 +3,9 @@ import pandas as pd
 import json
 
 from typing import List
-from backend.application.ports.output import DatabaseOutputPort
-from backend.domain.entities import News
-from config.config import SQLITE_DB_FOLDER_PATH
+from src.backend.application.ports.output import DatabaseOutputPort
+from src.backend.domain.entities import News
+from src.config.config import SQLITE_DB_FOLDER_PATH
 
 
 class SQLiteDatabase(DatabaseOutputPort):

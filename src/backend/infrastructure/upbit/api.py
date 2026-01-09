@@ -1,6 +1,6 @@
-from backend.domain.value_objects import Ticker, Symbol
-from config.config import settings
-from backend.application.ports.output import CryptoMarketOutputPort
+from src.backend.domain.value_objects import Symbol
+from src.config.config import settings
+from src.backend.application.ports.output import CryptoMarketOutputPort
 import pandas as pd
 
 

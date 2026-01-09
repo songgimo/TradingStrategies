@@ -1,12 +1,11 @@
 import logging
 import json
-import asyncio
 from dataclasses import dataclass
 
-from backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort
-from backend.domain.reference_data import Interval, StockMarketType
-from backend.domain.value_objects import Symbol
-from config.config import STATIC_FOLDER_PATH
+from src.backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort
+from src.backend.domain.reference_data import Interval, StockMarketType
+from src.backend.domain.value_objects import Symbol
+from src.config.config import STATIC_FOLDER_PATH
 
 logger = logging.getLogger(__name__)
 

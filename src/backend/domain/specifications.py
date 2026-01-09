@@ -1,4 +1,4 @@
-from backend.domain.value_objects import SMAResult, EMAResult, MarketContext, StrategyConfig
+from src.backend.domain.value_objects import MarketContext
 from abc import ABC, abstractmethod
 
 

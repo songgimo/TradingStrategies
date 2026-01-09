@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from backend.domain.reference_data import CryptoMarketType, StockMarketType, SectorType
+from src.backend.domain.reference_data import CryptoMarketType
 import re
 
 

@@ -3,7 +3,7 @@ from langchain_core.prompts import (
     ChatPromptTemplate,
     FewShotChatMessagePromptTemplate
 )
-from config.config import STATIC_FOLDER_PATH
+from src.config.config import STATIC_FOLDER_PATH
 
 
 def create_analyst_prompt() -> ChatPromptTemplate:

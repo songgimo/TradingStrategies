@@ -1,8 +1,7 @@
 import logging
-from config.config import settings
+from src.config.config import settings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from enum import Enum
-from langchain_huggingface import ChatHuggingFace
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,12 @@
 import logging
 import asyncio
 
-from apps.scheduler.celery_app import celery_app
-from backend.application import scheduler_services
-from backend.domain.reference_data import StockMarketType, Interval
-from backend.infrastructure.api.pykrx_api import PykrxAPI
-from backend.infrastructure.crawler.google_rss import GoogleNews
-from backend.infrastructure.db.database_api import SQLiteDatabase
+from src.apps.scheduler.celery_app import celery_app
+from src.backend.application import scheduler_services
+from src.backend.domain.reference_data import StockMarketType
+from src.backend.infrastructure.api.pykrx_api import PykrxAPI
+from src.backend.infrastructure.crawler.google_rss import GoogleNews
+from src.backend.infrastructure.db.database_api import SQLiteDatabase
 
 from celery.exceptions import MaxRetriesExceededError
 

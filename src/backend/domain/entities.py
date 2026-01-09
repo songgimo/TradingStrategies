@@ -2,7 +2,7 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-from backend.domain.value_objects import Symbol
+from src.backend.domain.value_objects import Symbol
 
 
 @dataclass

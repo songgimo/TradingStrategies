@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-from dataclasses import dataclass
 
-from backend.domain.value_objects import SMAResult, EMAResult, RSIResult
+from src.backend.domain.value_objects import SMAResult, EMAResult, RSIResult
 
 
 class IndicatorService:

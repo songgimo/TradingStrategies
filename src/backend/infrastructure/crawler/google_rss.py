@@ -4,11 +4,11 @@ import json
 import xml.etree.ElementTree as ET
 import hashlib
 from datetime import datetime
-from backend.domain.entities import News
-from config.config import STATIC_FOLDER_PATH
+from src.backend.domain.entities import News
+from src.config.config import STATIC_FOLDER_PATH
 from typing import List
 
-from backend.application.ports.output import NewsCrawlerOutputPort
+from src.backend.application.ports.output import NewsCrawlerOutputPort
 
 
 class GoogleNews(NewsCrawlerOutputPort):

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from backend.domain.entities import MarketAnalysis
-from backend.domain.value_objects import Symbol, StockMarketType
-from backend.domain.reference_data import Interval
-from backend.domain.entities import News
+from src.backend.domain.entities import MarketAnalysis
+from src.backend.domain.value_objects import Symbol, StockMarketType
+from src.backend.domain.reference_data import Interval
+from src.backend.domain.entities import News
 import pandas as pd # Pragmatic exception!
 from typing import List
 
