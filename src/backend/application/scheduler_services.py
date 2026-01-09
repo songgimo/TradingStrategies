@@ -46,4 +46,4 @@ class CollectNewsService:
 
     async def execute(self):
         news = await self.news_crawler_port.fetch_news()
-        self.database_port.insert_news(news)
+        self.database_port.put_news(news)

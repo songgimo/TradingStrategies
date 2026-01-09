@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
+from pyparsing import Literal
 
-from typing import List
+from src.backend.domain.entities import MarketAnalysis
+from typing import List, TypedDict, Optional
+
+from src.backend.domain.reference_data import MarketSentiment, TradingStrategy
 
 
 class MarketAnalysisSchema(BaseModel):
@@ -13,3 +17,13 @@ class MarketAnalysisSchema(BaseModel):
 
     cited_news_ids: List[str] = Field(description="List of news IDs used for this conclusion")
 
+
+class AgentState(TypedDict):
+    news_contents: List[str]
+    analysis_dict: Optional[dict]
+    market_analysis: Optional[MarketAnalysis]
+    
+    market_sentiment: Optional[MarketSentiment]
+    trading_strategy: Optional[TradingStrategy]
+
+    strategy_action: Optional[str]

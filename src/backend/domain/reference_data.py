@@ -68,3 +68,27 @@ class Interval(Enum):
 
     def __format__(self, format_spec):
         return self.value
+
+
+class MarketSentiment(Enum):
+    """
+        It is a market state to help langgraph's decision-making.
+    """
+    BULLISH = "bullish"
+    NEUTRAL = "neutral"
+    BEARISH = "bearish"
+
+    def __str__(self):
+        return self.value
+
+
+class TradingStrategy(Enum):
+    """
+        It is a strategy for trading
+    """
+    LONG = "long" # Bullish
+    CASH_HOLD = "cash_hold" # Neutral
+    SHORT = "short" # Bearish
+
+    def __str__(self):
+        return self.value

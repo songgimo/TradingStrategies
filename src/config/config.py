@@ -8,7 +8,7 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATIC_FOLDER_PATH = BASE_DIR / "statics"
 SQLITE_DB_FOLDER_PATH = BASE_DIR / "database"
 LOG_DIR = BASE_DIR / "logs"
