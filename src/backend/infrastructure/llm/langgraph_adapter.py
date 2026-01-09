@@ -29,9 +29,6 @@ class LangGraphAdapter(LLMOutputPort):
         result_state = await self._graph_app.ainvoke(inputs)
 
         analysis_entity = result_state["market_analysis"]
-        analysis_entity.market_condition = result_state.get("sentiment_category", "neutral")
-        analysis_entity.recommended_strategy = result_state.get("strategy_action", "wait")
-
         return analysis_entity
 
 
@@ -118,9 +115,9 @@ class RoutingPattern:
 
 
 if __name__ == '__main__':
-    graph = RoutingPattern()
+    graph = LangGraphAdapter()
     news_path = STATIC_FOLDER_PATH / "contents_for_test.json"
     with open(news_path, "r") as f:
         data = json.loads(f.read())
 
-    asyncio.run(graph.ainvoke({"news_contents": data}))
+    asyncio.run(graph.analyze_market(data))
