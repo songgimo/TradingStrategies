@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class CollectMarketDataService:
     """
         Use case for collecting market data.
-
+            Map-Reduce패턴
         Orchestrates:
         - Fetching OHLCV data from APIs
         - Storing data in database.
@@ -33,10 +33,7 @@ class CollectMarketDataService:
             )
         symbols = [Symbol(code) for code in codes]
         data = await self.market_port.get_candles_history(symbols, interval, count)
-        print(data)
-        # self.database_port.get_ohlcv_data()
-
-        # self.database_port.put_ohlcv_to_database(result)
+        self.database_port.put_ohlcv_to_database(data)
 
 
 @dataclass
