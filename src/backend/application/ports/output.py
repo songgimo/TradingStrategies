@@ -60,7 +60,7 @@ class NewsCrawlerOutputPort(ABC):
 
 class LLMOutputPort(ABC):
     @abstractmethod
-    async def analyze_market(self, news_contents: List[str]) -> MarketAnalysis:
+    async def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
         """
             Return MarketAnalysis
         """

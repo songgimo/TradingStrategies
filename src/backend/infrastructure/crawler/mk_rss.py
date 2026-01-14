@@ -7,6 +7,7 @@ import hashlib
 from datetime import datetime
 from src.backend.domain.entities import News
 from src.config.config import STATIC_FOLDER_PATH
+from email.utils import parsedate_to_datetime
 from typing import List
 from bs4 import BeautifulSoup
 
@@ -66,12 +67,16 @@ class MKNews(NewsCrawlerOutputPort):
                 root = ET.fromstring(content)
                 for item in root.findall('./channel/item'):
                     try:
+                        pub_date_str = item.find('pubDate').text
+                        pub_date = parsedate_to_datetime(pub_date_str)
+                        if not datetime.now().date() == pub_date.date():
+                            # crawling only today's news
+                            return news_list
+
                         title = item.find('title').text
                         link = item.find('link').text
-                        pub_date_str = item.find('pubDate').text
 
                         crawled_content = await self._crawl_article(session, link)
-                        pub_date = datetime.strptime(pub_date_str, "%a, %d %b %Y %H:%M:%S %Z")
                         news_id = hashlib.md5(link.encode()).hexdigest()
                         news = News(
                             id=news_id,

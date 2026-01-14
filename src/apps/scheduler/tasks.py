@@ -5,9 +5,9 @@ from src.apps.scheduler.celery_app import celery_app
 from src.backend.application import scheduler_services
 from src.backend.domain.reference_data import StockMarketType
 from src.backend.infrastructure.api.pykrx_api import PykrxAPI
-from src.backend.infrastructure.crawler.google_rss import GoogleNews
-from src.backend.infrastructure.crawler.mk_rss import MKNews
 
+from src.backend.infrastructure.crawler.mk_rss import MKNews
+from src.backend.infrastructure.llm.langchain_adapter import LangChainAdapter
 from src.backend.infrastructure.db.database_api import SQLiteDatabase
 
 from celery.exceptions import MaxRetriesExceededError
@@ -52,7 +52,8 @@ def collect_daily_news(self):
     try:
         service = scheduler_services.CollectNewsService(
             MKNews(),
-            SQLiteDatabase()
+            SQLiteDatabase(),
+            LangChainAdapter()
         )
         asyncio.run(service.execute())
 

@@ -9,6 +9,7 @@ from src.backend.domain.entities import MarketAnalysis
 from src.backend.infrastructure.llm.schemas import MarketAnalysisSchema
 from src.backend.infrastructure.llm.prompts import create_analyst_prompt
 from src.backend.infrastructure.llm.clients import LLMClients
+from src.backend.domain.entities import News
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,14 @@ class LangChainAdapter(LLMOutputPort):
 
         self.prompts = create_analyst_prompt()
 
-
-    async def analyze_market(self, news_items: List[str]) -> MarketAnalysis:
+    async def analyze_market(self, news_items: List[News]) -> MarketAnalysis:
         chain = self.prompts | self.llm | self.parser
-        full_text = "\n".join(news_items)
+
+        full_text = "\n"
+        for each in news_items:
+            each.content = each.content.replace("\n", " ")
+            full_text += each.content + "\n"
+
         try:
             result = await chain.ainvoke({
                 "news_data": full_text,

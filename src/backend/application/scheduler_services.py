@@ -2,7 +2,8 @@ import logging
 import json
 from dataclasses import dataclass
 
-from src.backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort
+from src.backend.application.ports.output import MarketOutputPort, DatabaseOutputPort, NewsCrawlerOutputPort, \
+    LLMOutputPort
 from src.backend.domain.reference_data import Interval, StockMarketType
 from src.backend.domain.value_objects import Symbol
 from src.config.config import STATIC_FOLDER_PATH
@@ -40,7 +41,34 @@ class CollectMarketDataService:
 class CollectNewsService:
     news_crawler_port: NewsCrawlerOutputPort
     database_port: DatabaseOutputPort
+    llm_port: LLMOutputPort
 
     async def execute(self):
-        news = await self.news_crawler_port.fetch_news()
-        self.database_port.put_news(news)
+        news_list = await self.news_crawler_port.fetch_news()
+
+        if not news_list:
+            logger.warning("No news collected.")
+            return
+
+        logger.info(f"Saving {len(news_list)} news items to Database..")
+        self.database_port.put_news(news_list)
+
+        logger.info("Analyzing market with LLM...")
+        market_analysis = await self.llm_port.analyze_market(news_list)
+
+        logger.info(f"Saving analysis result: {market_analysis.summary}")
+        self.database_port.save_market_analysis(market_analysis)
+
+
+if __name__ == '__main__':
+    from src.backend.infrastructure.crawler.mk_rss import MKNews
+    from src.backend.infrastructure.llm.langchain_adapter import LangChainAdapter
+    from src.backend.infrastructure.db.database_api import SQLiteDatabase
+    import asyncio
+
+    service = CollectNewsService(
+        MKNews(),
+        SQLiteDatabase(),
+        LangChainAdapter()
+    )
+    asyncio.run(service.execute())

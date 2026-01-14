@@ -26,6 +26,6 @@ class LLMClients:
             google_api_key=settings.google_api_key.get_secret_value(),
         )
 
-        logger.error(f"LLM Client initialized with model name: {model_name}")
+        logger.info(f"LLM Client initialized with model name: {model_name}")
 
         return llm
