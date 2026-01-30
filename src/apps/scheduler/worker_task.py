@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from src.apps.scheduler.celery_app import celery_app
 from src.backend.application import scheduler_services
@@ -72,5 +73,5 @@ def collect_daily_news(self, source: NewsSourceType):
 def analyze_market_news_task(results):
     service = NewsAnalysisService(SQLiteDatabase(), LangChainAdapter())
 
-    summary = service.execute()
+    summary = asyncio.run(service.execute())
     return f"Market Analysis Completed: {summary}"
