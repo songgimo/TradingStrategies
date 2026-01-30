@@ -1,5 +1,4 @@
 import logging
-import asyncio
 
 from src.apps.scheduler.celery_app import celery_app
 from src.backend.application import scheduler_services
@@ -24,9 +23,9 @@ logger = logging.getLogger(__name__)
     retry_backoff=60,
     retry_backoff_max=3600,
     retry_jitter=True,
-    rate_limit="5/m",
+    rate_limit="30/m",
 )
-def collect_stock_data_chunk(self, market_type: StockMarketType, codes: list):
+def collect_stock_data_chunk(self, market_type: StockMarketType, code: str):
     """
         Task for collecting KOSPI stocks
         The business logic is in the use case.
@@ -37,10 +36,9 @@ def collect_stock_data_chunk(self, market_type: StockMarketType, codes: list):
         market_port,
         SQLiteDatabase()
     )
-    symbols = [Symbol(code) for code in codes]
 
-    asyncio.run(service.execute(symbols))
-
+    symbols = Symbol(code)
+    service.execute(symbols)
     logger.info(f"[Task {self.request.id}] Successfully completed.")
 
     return f"KOSPI collection success: {self.request.id}"
@@ -65,7 +63,7 @@ def collect_daily_news(self, source: NewsSourceType):
         crawler_port,
         SQLiteDatabase(),
     )
-    asyncio.run(service.execute())
+    service.execute()
 
     logger.info(f"[Task {self.request.id}] News collection completed successfully.")
 
@@ -74,5 +72,5 @@ def collect_daily_news(self, source: NewsSourceType):
 def analyze_market_news_task(results):
     service = NewsAnalysisService(SQLiteDatabase(), LangChainAdapter())
 
-    summary = asyncio.run(service.execute())
+    summary = service.execute()
     return f"Market Analysis Completed: {summary}"

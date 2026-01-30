@@ -25,8 +25,8 @@ class CollectMarketDataService:
     market_port: MarketOutputPort
     database_port: DatabaseOutputPort
 
-    def execute(self, symbols: List[Symbol], interval: Interval = Interval.DAY, count: int = 1):
-        data = self.market_port.get_candles_history(symbols, interval, count)
+    def execute(self, symbol: Symbol, interval: Interval = Interval.DAY, count: int = 1):
+        data = self.market_port.get_candle_history(symbol, interval, count)
         self.database_port.put_ohlcv_to_database(data)
 
 

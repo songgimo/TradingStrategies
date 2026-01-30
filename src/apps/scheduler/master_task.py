@@ -26,18 +26,20 @@ def _load_codes(stock_file_path: str):
 @celery_app.task(bind=True, queue="market_queue")
 def master_collect_stocks():
     kospi_codes = _load_codes("kospi_200_codes.json")
-    kospi_groups = group(
-        collect_stock_data_chunk.s(StockMarketType.KOSPI, chunk).set(queue="kospi_queue")
-        for chunk in chunks(kospi_codes, 20)
+    kospi_group = group(
+        collect_stock_data_chunk.s(StockMarketType.KOSPI, code).set(queue="kospi_queue")
+        for code in kospi_codes
     )
-    kospi_groups.apply_async()
+    kospi_group.apply_async()
+    logger.info(f"Master task dispatched {len(kospi_codes)} individual tasks for KOSPI.")
 
     nasdaq_codes = _load_codes("nasdaq_codes.json")
-    nasdaq_groups = group(
-        collect_stock_data_chunk.s(StockMarketType.KOSDAQ, chunk).set(queue="nasdaq_queue")
-        for chunk in chunks(nasdaq_codes, 50)
+    nasdaq_group = group(
+        collect_stock_data_chunk.s(StockMarketType.NASDAQ, code).set(queue="nasdaq_queue")
+        for code in nasdaq_codes
     )
-    nasdaq_groups.apply_async()
+    nasdaq_group.apply_async()
+    logger.info(f"Master task dispatched {len(nasdaq_codes)} individual tasks for NASDAQ.")
 
 
 @celery_app.task(queue="news_queue")
