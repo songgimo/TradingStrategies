@@ -15,11 +15,11 @@ class MarketOutputPort(ABC):
     SECRET: str
 
     @abstractmethod
-    async def get_candle_history(self, target: Symbol, interval: Interval, count: int = 200) -> pd.DataFrame:
+    def get_candle_history(self, target: Symbol, interval: Interval, count: int = 200) -> pd.DataFrame:
         ...
 
     @abstractmethod
-    async def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1) -> pd.DataFrame:
+    def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1) -> pd.DataFrame:
         """
             1 day candle only supported.
         """
@@ -54,13 +54,13 @@ class DatabaseOutputPort(ABC):
 
 class NewsCrawlerOutputPort(ABC):
     @abstractmethod
-    async def fetch_news(self):
+    def fetch_news(self):
         ...
 
 
 class LLMOutputPort(ABC):
     @abstractmethod
-    async def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
+    def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
         """
             Return MarketAnalysis
         """

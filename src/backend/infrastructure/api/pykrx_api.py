@@ -1,13 +1,14 @@
-import asyncio
+import time
 import random
-from pykrx import stock
-import pandas as pd
+import logging
 import datetime
+import pandas as pd
+from typing import List
+
+from pykrx import stock
 from src.backend.application.ports.output import MarketOutputPort
 from src.backend.domain.value_objects import Symbol
 from src.backend.domain.reference_data import Interval, StockMarketType
-from typing import List
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class PykrxAPI(MarketOutputPort):
         Interval.MONTH: 'm'
     }
 
-    async def get_candle_history(self, target: Symbol, interval: Interval, count: int = 1) -> pd.DataFrame:
+    def get_candle_history(self, target: Symbol, interval: Interval, count: int = 1) -> pd.DataFrame:
         logger.info(f"Fetching candle history: ticker={target}, interval={interval}, count={count}")
         freq = self._INTERVAL_MAP.get(interval)
         if not freq:
@@ -33,18 +34,15 @@ class PykrxAPI(MarketOutputPort):
         ohlcv_df = pd.DataFrame()
         to_date = datetime.datetime.now()
         for _ in range(10):
-            from_date = to_date - datetime.timedelta(days=count)
-
+            from_date = to_date - datetime.timedelta(days=count + 5)
             from_str, to_str = from_date.strftime("%Y%m%d"), to_date.strftime("%Y%m%d")
 
             logger.debug(f"Fetching candle history from {from_str} to {to_str}")
-            result = await asyncio.to_thread(
-                stock.get_market_ohlcv,
+            result = stock.get_market_ohlcv(
                 from_str,
                 to_str,
                 str(target),
                 freq
-
             )
             ohlcv_df = pd.concat([ohlcv_df, result])
             if len(ohlcv_df) >= count:
@@ -55,40 +53,28 @@ class PykrxAPI(MarketOutputPort):
             to_date = from_date
 
         ohlcv_df.index.name = 'candle_date_time'
-        df = ohlcv_df.sort_index(ascending=False).head(count).rename(columns=self._ENG_COLUMNS).assign(interval=str(Interval.DAY), symbol=str(target))
+        df = ohlcv_df.sort_index(ascending=False).head(count).rename(columns=self._ENG_COLUMNS).assign(
+            interval=str(interval),
+            symbol=str(target)
+        )
         df.reset_index(inplace=True)
         return df
 
-    async def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1):
-        sem = asyncio.Semaphore(5)
-        async def _fetch_wrapper(target):
-            async with sem:
-                await asyncio.sleep(random.uniform(0.1, 0.5))
-                try:
-                    return await self.get_candle_history(target, interval, count)
-                except Exception as e:
-                    logger.error(f"Failed to fetch {target}: {e}")
-                    return pd.DataFrame()
+    def get_candles_history(self, targets: List[Symbol], interval: Interval, count: int = 1) -> pd.DataFrame:
+        results = []
+        for target in targets:
+            time.sleep(random.uniform(0.2, 0.7))
+            try:
+                df = self.get_candle_history(target, interval, count)
+                if not df.empty:
+                    results.append(df)
+            except Exception as e:
+                logger.error(f"Failed to fetch {target}: {e}")
 
-        tasks = [_fetch_wrapper(target) for target in targets]
-
-        results = await asyncio.gather(*tasks)
-
-        valid_dfs = [df for df in results if not df.empty]
-
-        if not valid_dfs:
+        if not results:
             return pd.DataFrame()
 
-        return pd.concat(valid_dfs, ignore_index=True)
+        return pd.concat(results, ignore_index=True)
 
     def get_all_symbols(self, market_type: StockMarketType):
-        ...
-        # logger.info("Fetching all symbols from markets.")
-        #
-        # if not market_type in [market_type.KOSPI, market_type.KOSDAQ]:
-        #     logger.error(f"Invalid MarketType '{market_type}'")
-        #     raise ValueError("Pykrx only supports KOSPI and KOSDAQ markets")
-        #
-        # json_file = settings.json_file_path + "stock_codes.json"
-        # with open(json_file, "r") as f:
-        #     data = json.loads(f.read())
+        pass

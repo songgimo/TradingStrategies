@@ -25,8 +25,8 @@ class CollectMarketDataService:
     market_port: MarketOutputPort
     database_port: DatabaseOutputPort
 
-    async def execute(self, symbols: List[Symbol], interval: Interval = Interval.DAY, count: int = 1):
-        data = await self.market_port.get_candles_history(symbols, interval, count)
+    def execute(self, symbols: List[Symbol], interval: Interval = Interval.DAY, count: int = 1):
+        data = self.market_port.get_candles_history(symbols, interval, count)
         self.database_port.put_ohlcv_to_database(data)
 
 
@@ -35,8 +35,8 @@ class CollectNewsService:
     news_crawler_port: NewsCrawlerOutputPort
     database_port: DatabaseOutputPort
 
-    async def execute(self):
-        news_list = await self.news_crawler_port.fetch_news()
+    def execute(self):
+        news_list = self.news_crawler_port.fetch_news()
 
         if not news_list:
             logger.warning("No news collected.")
@@ -53,12 +53,12 @@ class NewsAnalysisService:
     database_port: DatabaseOutputPort
     llm_port: LLMOutputPort
 
-    async def execute(self):
+    def execute(self):
         today = datetime.datetime.now().date()
         news_list = self.database_port.get_news_by_date(today)
         if not news_list:
             return "No news to analyze"
 
-        analysis = await self.llm_port.analyze_market(news_list)
+        analysis = self.llm_port.analyze_market(news_list)
         self.database_port.save_market_analysis(analysis)
         return analysis.summary
