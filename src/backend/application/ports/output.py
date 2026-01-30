@@ -54,13 +54,13 @@ class DatabaseOutputPort(ABC):
 
 class NewsCrawlerOutputPort(ABC):
     @abstractmethod
-    def fetch_news(self):
+    async def fetch_news(self):
         ...
 
 
 class LLMOutputPort(ABC):
     @abstractmethod
-    def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
+    async def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
         """
             Return MarketAnalysis
         """
