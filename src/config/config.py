@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
-from pathlib import Path
 import logging
 import sys
 from pathlib import Path
@@ -12,6 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATIC_FOLDER_PATH = BASE_DIR / "statics"
 SQLITE_DB_FOLDER_PATH = BASE_DIR / "database"
 LOG_DIR = BASE_DIR / "logs"
+
 
 class Settings(BaseSettings):
     app_name: str = "StockTrader"
