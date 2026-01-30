@@ -1,5 +1,22 @@
 from enum import Enum
 
+
+class NewsSourceType(Enum):
+    MK_STOCK = "MK_STOCK"
+    HK_FINANCE = "HK_FINANCE"
+    KOREA_MINISTRY_BRIEFING = "KOREA_MINISTRY_BRIEFING"
+    KOREA_CABINET_BRIEFING = "KOREA_CABINET_BRIEFING"
+    KOREA_PRESS_RELEASE = "KOREA_PRESS_RELEASE"
+    KOREA_POLICY = "KOREA_POLICY"
+    KOREA_FSC = "KOREA_FSC"
+
+    def __str__(self):
+        return self.value
+
+    def __format__(self, format_spec):
+        return self.value
+
+
 class StockMarketType(Enum):
     KOSPI = "KOSPI"
     KOSDAQ = "KOSDAQ"
