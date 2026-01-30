@@ -6,7 +6,8 @@ from src.backend.application import scheduler_services
 from src.backend.application.scheduler_services import NewsAnalysisService
 from src.backend.domain.reference_data import StockMarketType, NewsSourceType
 from src.backend.domain.entities import Symbol
-from src.backend.infrastructure.api.factory import MarketAPIFactory, NewsCrawlerFactory
+from src.backend.infrastructure.api.factory import MarketAPIFactory
+from src.backend.infrastructure.crawler.factory import NewsCrawlerFactory
 
 from src.backend.infrastructure.llm.langchain_adapter import LangChainAdapter
 from src.backend.infrastructure.db.database_api import SQLiteDatabase
@@ -18,7 +19,6 @@ logger = logging.getLogger(__name__)
 @celery_app.task(
     bind=True,
     max_retries=3,
-    acks_late=True,
     reject_on_worker_lost=True,
     autoretry_for=(Exception,),
     retry_backoff=60,

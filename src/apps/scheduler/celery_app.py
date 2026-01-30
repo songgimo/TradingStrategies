@@ -15,6 +15,9 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
+    worker_send_task_events=True,
+    worker_prefetch_multiplier=1,
+    task_acks_late=True,
 )
 
 from src.apps.scheduler.beat_schedule import BEAT_SCHEDULE
