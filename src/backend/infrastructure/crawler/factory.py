@@ -1,4 +1,4 @@
-from src.backend.infrastructure.crawler.mk_rss import MKNews, HKNews
+from src.backend.infrastructure.crawler.news_rss import MKNews, HKNews
 from src.backend.domain.reference_data import NewsSourceType
 
 class NewsCrawlerFactory:
