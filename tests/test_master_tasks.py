@@ -4,7 +4,7 @@ from src.apps.scheduler.master_task import master_collect_stocks
 
 
 @patch("src.apps.scheduler.master_task._load_codes")
-@patch("celery.group")
+@patch("src.apps.scheduler.master_task.group")
 def test_master_collect_stocks_dispatching(mock_group, mock_load):
     # 1. 가짜 종목 코드 설정 (25개)
     mock_load.return_value = [f"code_{i}" for i in range(25)]

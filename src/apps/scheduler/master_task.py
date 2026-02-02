@@ -23,7 +23,7 @@ def _load_codes(stock_file_path: str):
         return json.loads(f.read())
 
 
-@celery_app.task(bind=True, queue="market_queue")
+@celery_app.task(queue="market_queue")
 def master_collect_stocks():
     kospi_codes = _load_codes("kospi_200_codes.json")
     kospi_group = group(
