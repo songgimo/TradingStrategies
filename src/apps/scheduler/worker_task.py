@@ -10,7 +10,9 @@ from src.backend.infrastructure.api.factory import MarketAPIFactory
 from src.backend.infrastructure.crawler.factory import NewsCrawlerFactory
 
 from src.backend.infrastructure.llm.langchain_adapter import LangChainAdapter
+from src.backend.infrastructure.llm.langgraph_adapter import StrategyGenerationGraph
 from src.backend.infrastructure.db.database_api import SQLiteDatabase
+from src.backend.application.agent_services import StrategyGenerationService
 
 
 logger = logging.getLogger(__name__)
@@ -75,3 +77,14 @@ def analyze_market_news_task(results):
 
     summary = asyncio.run(service.execute())
     return f"Market Analysis Completed: {summary}"
+
+
+@celery_app.task(queue="strategy_queue")
+def generate_trade_strategies_task():
+    market_port = MarketAPIFactory.get_port(StockMarketType.KOSPI)
+    db_port = SQLiteDatabase()
+    llm_port = StrategyGenerationGraph()
+    
+    service = StrategyGenerationService(llm_port, db_port, market_port)
+    strategies = asyncio.run(service.run_strategy_generation())
+    return f"Strategy Generation Completed: {len(strategies)} strategies created."

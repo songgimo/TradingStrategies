@@ -10,4 +10,9 @@ BEAT_SCHEDULE = {
         "task": "apps.scheduler.tasks.collect_daily_news",
         "schedule": crontab(hour=8, minute=0),
     },
+    "daily-strategy-generation": {
+        "task": "src.apps.scheduler.worker_task.generate_trade_strategies_task",
+        "schedule": crontab(hour=21, minute=0),
+    },
 }
+
