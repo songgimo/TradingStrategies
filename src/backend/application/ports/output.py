@@ -50,6 +50,14 @@ class DatabaseOutputPort(ABC):
         """
             save the results of market analysis.
         """
+        ...
+        
+    @abstractmethod
+    def get_all_symbols(self) -> List[str]:
+        """
+        Get all unique symbols currently stored in the OHLCV database
+        """
+        ...
 
 
 class NewsCrawlerOutputPort(ABC):

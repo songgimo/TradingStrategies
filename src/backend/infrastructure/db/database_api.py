@@ -135,3 +135,15 @@ class SQLiteDatabase(DatabaseOutputPort):
 
     def save_market_analysis(self, analysis: MarketAnalysis):
         ...
+
+    def get_all_symbols(self) -> List[str]:
+        conn, cursor = self._connect()
+        try:
+            cursor.execute("SELECT DISTINCT symbol FROM ohlcv_candles")
+            rows = cursor.fetchall()
+            return [str(row[0]) for row in rows]
+        except Exception as ex:
+            logger.error(f"Failed to get symbols: {ex}")
+            return []
+        finally:
+            conn.close()

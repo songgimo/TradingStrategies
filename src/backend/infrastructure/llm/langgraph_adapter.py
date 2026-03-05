@@ -24,13 +24,21 @@ from src.config.config import settings, STATIC_FOLDER_PATH
 logger = logging.getLogger(__name__)
 
 
-class LangGraphAdapter(LLMOutputPort):
+class StrategyGenerationGraph(LLMOutputPort):
     def __init__(self):
-        self._graph_app = StrategyGenerationGraph()
+        self.llm = LLMClients.google_llm_client(temperature=0.3)
+        self.analyst_parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
+        self.strategy_parser = JsonOutputParser(pydantic_object=TradeStrategySchema)
+        
+        self.analyst_chain = create_analyst_prompt() | self.llm | self.analyst_parser
+        self.strategy_chain = create_strategy_generator_prompt() | self.llm | self.strategy_parser
+        self.risk_chain = create_risk_manager_prompt() | self.llm | self.strategy_parser
+
+        self.app = self._build_graph()
 
     async def analyze_market(self, news_contents: List[str]) -> MarketAnalysis:
         inputs = {"news_contents": news_contents}
-        result_state = await self._graph_app.ainvoke(inputs)
+        result_state = await self.ainvoke(inputs)
 
         analysis_entity = result_state["market_analysis"]
         return analysis_entity
@@ -40,7 +48,7 @@ class LangGraphAdapter(LLMOutputPort):
             "news_contents": news_contents,
             "stock_analyses": stock_analyses
         }
-        result_state = await self._graph_app.ainvoke(inputs)
+        result_state = await self.ainvoke(inputs)
         
         strategies_data = result_state.get("final_validated_strategies", [])
         strategies = []
@@ -55,12 +63,6 @@ class LangGraphAdapter(LLMOutputPort):
                 reasoning=s.get("reasoning", "")
             ))
         return strategies
-
-
-class StrategyGenerationGraph:
-    def __init__(self):
-        self.llm = LLMClients.google_llm_client(temperature=0.3)
-        self.analyst_parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
         self.strategy_parser = JsonOutputParser(pydantic_object=TradeStrategySchema)
         
         self.analyst_chain = create_analyst_prompt() | self.llm | self.analyst_parser
@@ -175,7 +177,7 @@ class StrategyGenerationGraph:
 
 
 if __name__ == '__main__':
-    graph = LangGraphAdapter()
+    graph = StrategyGenerationGraph()
     news_path = STATIC_FOLDER_PATH / "contents_for_test.json"
     try:
         with open(news_path, "r") as f:
