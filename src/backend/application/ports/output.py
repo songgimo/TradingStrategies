@@ -60,8 +60,16 @@ class NewsCrawlerOutputPort(ABC):
 
 class LLMOutputPort(ABC):
     @abstractmethod
-    async def analyze_market(self, news_contents: List[News]) -> MarketAnalysis:
+    async def analyze_market(self, news_contents: List[str]) -> MarketAnalysis:
         """
             Return MarketAnalysis
         """
+        ...
+        
+    @abstractmethod
+    async def generate_strategies(self, news_contents: List[str], stock_analyses: List[dict]) -> List['TradeStrategy']:
+        """
+            Runs the multi-agent graph to generate TradeStrategies
+        """
+        ...
 

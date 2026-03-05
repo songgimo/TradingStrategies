@@ -1,0 +1,1 @@
+celery -A src.apps.scheduler.celery_app worker -Q market_queue,news_queue -c 4 --loglevel=info

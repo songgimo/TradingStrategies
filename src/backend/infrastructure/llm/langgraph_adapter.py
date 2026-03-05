@@ -8,11 +8,15 @@ from langchain_core.output_parsers import JsonOutputParser
 from langgraph.graph import StateGraph, END, START
 
 from src.backend.application.ports.output import LLMOutputPort
-from src.backend.domain.entities import MarketAnalysis
+from src.backend.domain.entities import MarketAnalysis, TradeStrategy, StockAnalysis
 from src.backend.domain.reference_data import MarketSentiment, TradingStrategy
 
-from src.backend.infrastructure.llm.schemas import MarketAnalysisSchema, AgentState
-from src.backend.infrastructure.llm.prompts import create_analyst_prompt
+from src.backend.infrastructure.llm.schemas import MarketAnalysisSchema, TradeStrategySchema, AgentState
+from src.backend.infrastructure.llm.prompts import (
+    create_analyst_prompt,
+    create_strategy_generator_prompt,
+    create_risk_manager_prompt
+)
 from src.backend.infrastructure.llm.clients import LLMClients
 
 from src.config.config import settings, STATIC_FOLDER_PATH
@@ -22,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class LangGraphAdapter(LLMOutputPort):
     def __init__(self):
-        self._graph_app = RoutingPattern()
+        self._graph_app = StrategyGenerationGraph()
 
     async def analyze_market(self, news_contents: List[str]) -> MarketAnalysis:
         inputs = {"news_contents": news_contents}
@@ -30,14 +34,38 @@ class LangGraphAdapter(LLMOutputPort):
 
         analysis_entity = result_state["market_analysis"]
         return analysis_entity
+        
+    async def generate_strategies(self, news_contents: List[str], stock_analyses: List[dict]) -> List[TradeStrategy]:
+        inputs = {
+            "news_contents": news_contents,
+            "stock_analyses": stock_analyses
+        }
+        result_state = await self._graph_app.ainvoke(inputs)
+        
+        strategies_data = result_state.get("final_validated_strategies", [])
+        strategies = []
+        for s in strategies_data:
+            strategies.append(TradeStrategy(
+                symbol=s.get("symbol", ""),
+                action=TradingStrategy(s.get("action", "CASH_HOLD")),
+                confidence_score=s.get("confidence_score", 0.0),
+                entry_price=s.get("entry_price"),
+                take_profit=s.get("take_profit"),
+                stop_loss=s.get("stop_loss"),
+                reasoning=s.get("reasoning", "")
+            ))
+        return strategies
 
 
-class RoutingPattern:
+class StrategyGenerationGraph:
     def __init__(self):
         self.llm = LLMClients.google_llm_client(temperature=0.3)
-        self.parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
-        self.prompts = create_analyst_prompt()
-        self.chain = self.prompts | self.llm | self.parser
+        self.analyst_parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
+        self.strategy_parser = JsonOutputParser(pydantic_object=TradeStrategySchema)
+        
+        self.analyst_chain = create_analyst_prompt() | self.llm | self.analyst_parser
+        self.strategy_chain = create_strategy_generator_prompt() | self.llm | self.strategy_parser
+        self.risk_chain = create_risk_manager_prompt() | self.llm | self.strategy_parser
 
         self.app = self._build_graph()
 
@@ -49,40 +77,34 @@ class RoutingPattern:
 
         # Add Nodes
         workflow.add_node("market_analyst", self._market_analyst_node)
-        workflow.add_node(TradingStrategy.LONG.value, self._long_strategy_node)
-        workflow.add_node(TradingStrategy.CASH_HOLD.value, self._wait_and_see_node)
-        workflow.add_node(TradingStrategy.SHORT.value, self._short_strategy_node)
+        workflow.add_node("technical_screener", self._technical_screener_node)
+        workflow.add_node("strategy_generator", self._strategy_generator_node)
+        workflow.add_node("risk_manager", self._risk_manager_node)
 
         workflow.add_edge(START, "market_analyst")
-
-        workflow.add_conditional_edges(
-            "market_analyst",
-            self._sentiment_router,
-            {
-                MarketSentiment.BULLISH: TradingStrategy.LONG.value,
-                MarketSentiment.NEUTRAL: TradingStrategy.CASH_HOLD.value,
-                MarketSentiment.BEARISH: TradingStrategy.SHORT.value,
-            }
-        )
-        workflow.add_edge(TradingStrategy.LONG.value, END)
-        workflow.add_edge(TradingStrategy.SHORT.value, END)
-        workflow.add_edge(TradingStrategy.CASH_HOLD.value, END)
+        workflow.add_edge("market_analyst", "technical_screener")
+        workflow.add_edge("technical_screener", "strategy_generator")
+        workflow.add_edge("strategy_generator", "risk_manager")
+        workflow.add_edge("risk_manager", END)
 
         return workflow.compile()
 
-    def _sentiment_router(self, state: AgentState):
-        analysis = state.get("market_analysis")
-        if not analysis:
-            return MarketSentiment.NEUTRAL
-        return analysis.determined_market_sentiment
-
     async def _market_analyst_node(self, state: AgentState):
-        news_list = state.get("news_contents")
+        news_list = state.get("news_contents", [])
+        if not news_list:
+            return {"market_analysis": MarketAnalysis(
+                date=datetime.now().strftime("%Y-%m-%d"),
+                sentiment_score=0.0,
+                summary="No news provided",
+                primary_sectors=[],
+                reasons="N/A"
+            )}
+            
         full_text = "\n".join(news_list)
         try:
-            result = await self.chain.ainvoke({
+            result = await self.analyst_chain.ainvoke({
                 "news_data": full_text,
-                "format_instructions": self.parser.get_format_instructions()
+                "format_instructions": self.analyst_parser.get_format_instructions()
             })
             analysis_entity = MarketAnalysis(
                 date=datetime.now().strftime("%Y-%m-%d"),
@@ -104,20 +126,61 @@ class RoutingPattern:
                 reasons="System Error"
             )}
 
-    async def _long_strategy_node(self, state: AgentState):
-        return {"sentiment_category": "bullish", "strategy_action": "long_momentum"}
+    async def _technical_screener_node(self, state: AgentState):
+        stock_analyses = state.get("stock_analyses", [])
+        market_analysis = state.get("market_analysis")
+        
+        return {"candidate_stocks": [s.get("symbol") for s in stock_analyses]}
 
-    async def _short_strategy_node(self, state: AgentState):
-        return {"sentiment_category": "bearish", "strategy_action": "short_selling"}
+    async def _strategy_generator_node(self, state: AgentState):
+        stock_analyses = state.get("stock_analyses", [])
+        market_analysis = state.get("market_analysis")
+        
+        generated_strategies = []
+        for stock_ctx in stock_analyses:
+            context_str = f"Symbol: {stock_ctx.get('symbol')}\nTechnical: {stock_ctx.get('technical_context')}\nMarket Sentiment: {market_analysis.summary if market_analysis else 'Neutral'}\nSectors: {market_analysis.primary_sectors if market_analysis else []}"
+            
+            try:
+                result = await self.strategy_chain.ainvoke({
+                    "context_data": context_str,
+                    "format_instructions": self.strategy_parser.get_format_instructions()
+                })
+                generated_strategies.append(result)
+            except Exception as e:
+                logger.error(f"Strategy generation failed for {stock_ctx.get('symbol')}: {e}")
+                
+        return {"generated_strategies": generated_strategies}
 
-    async def _wait_and_see_node(self, state: AgentState):
-        return {"sentiment_category": "neutral", "strategy_action": "cash_hold"}
+    async def _risk_manager_node(self, state: AgentState):
+        strategies_data = state.get("generated_strategies", [])
+        market_analysis = state.get("market_analysis")
+        
+        final_strategies = []
+        market_context_str = f"Market Sentiment Score: {market_analysis.sentiment_score if market_analysis else 0.0}\nSummary: {market_analysis.summary if market_analysis else 'Unknown'}"
+        
+        for strategy in strategies_data:
+            try:
+                result = await self.risk_chain.ainvoke({
+                    "strategy_data": json.dumps(strategy),
+                    "market_context": market_context_str,
+                    "format_instructions": self.strategy_parser.get_format_instructions()
+                })
+                final_strategies.append(result)
+            except Exception as e:
+                logger.error(f"Risk Management failed for strategy {strategy}: {e}")
+                # Fallback to the original strategy if risk check fails
+                final_strategies.append(strategy)
+                
+        return {"final_validated_strategies": final_strategies}
 
 
 if __name__ == '__main__':
     graph = LangGraphAdapter()
     news_path = STATIC_FOLDER_PATH / "contents_for_test.json"
-    with open(news_path, "r") as f:
-        data = json.loads(f.read())
-
-    asyncio.run(graph.analyze_market(data))
+    try:
+        with open(news_path, "r") as f:
+            data = json.loads(f.read())
+        
+        asyncio.run(graph.analyze_market(data))
+    except FileNotFoundError:
+        print("Mock file not found. Skipping standalone execution.")

@@ -7,6 +7,31 @@ from src.backend.domain.reference_data import MarketSentiment, TradingStrategy
 
 
 @dataclass
+class TradeStrategy:
+    symbol: str
+    action: TradingStrategy
+    confidence_score: float
+    entry_price: Optional[float] = None
+    take_profit: Optional[float] = None
+    stop_loss: Optional[float] = None
+    reasoning: str = ""
+    valid_until: Optional[datetime] = None
+
+
+@dataclass
+class StockAnalysis:
+    symbol: str
+    date: str
+    sentiment_score: float
+    summary: str
+    reasons: str
+    recommended_strategy: TradingStrategy = TradingStrategy.CASH_HOLD
+    technical_context: Optional[str] = None
+    thought_process: Optional[str] = None
+
+
+
+@dataclass
 class News:
     id: str
     title: str
