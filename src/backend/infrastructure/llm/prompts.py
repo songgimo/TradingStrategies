@@ -36,6 +36,17 @@ def create_analyst_prompt() -> ChatPromptTemplate:
     return final_prompt
 
 
+def create_screener_prompt() -> ChatPromptTemplate:
+    return ChatPromptTemplate.from_messages([
+        ("system", "You are an expert quantitative technical analyst. "
+                   "Given a stock's technical context and the current market macroeconomic sentiment, "
+                   "determine if the stock is a viable candidate for trading right now. "
+                   "Filter out stocks with weak setups or those fighting a strong broader market trend unnecessarily. "
+                   "Use the provided format strictly."),
+        ("human", "Candidate Stock Context:\n{context_data}\n\n{format_instructions}")
+    ])
+
+
 def create_strategy_generator_prompt() -> ChatPromptTemplate:
     return ChatPromptTemplate.from_messages([
         ("system", "You are an expert quantitative trading strategist. "

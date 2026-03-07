@@ -18,6 +18,11 @@ class MarketAnalysisSchema(BaseModel):
     cited_news_ids: List[str] = Field(description="List of news IDs used for this conclusion")
 
 
+class TechnicalScreenerSchema(BaseModel):
+    is_candidate: bool = Field(description="True if the stock is a good candidate for trading, False otherwise")
+    reasoning: str = Field(description="Reasoning for why the stock is or is not a good candidate based on technicals and market context")
+
+
 class TradeStrategySchema(BaseModel):
     symbol: str = Field(description="The stock symbol or name")
     action: str = Field(description="The recommended action: LONG, SHORT, or CASH_HOLD")

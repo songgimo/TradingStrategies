@@ -11,9 +11,10 @@ from src.backend.application.ports.output import LLMOutputPort
 from src.backend.domain.entities import MarketAnalysis, TradeStrategy, StockAnalysis
 from src.backend.domain.reference_data import MarketSentiment, TradingStrategy
 
-from src.backend.infrastructure.llm.schemas import MarketAnalysisSchema, TradeStrategySchema, AgentState
+from src.backend.infrastructure.llm.schemas import MarketAnalysisSchema, TradeStrategySchema, TechnicalScreenerSchema, AgentState
 from src.backend.infrastructure.llm.prompts import (
     create_analyst_prompt,
+    create_screener_prompt,
     create_strategy_generator_prompt,
     create_risk_manager_prompt
 )
@@ -26,11 +27,14 @@ logger = logging.getLogger(__name__)
 
 class StrategyGenerationGraph(LLMOutputPort):
     def __init__(self):
+        
         self.llm = LLMClients.google_llm_client(temperature=0.3)
         self.analyst_parser = JsonOutputParser(pydantic_object=MarketAnalysisSchema)
+        self.screener_parser = JsonOutputParser(pydantic_object=TechnicalScreenerSchema)
         self.strategy_parser = JsonOutputParser(pydantic_object=TradeStrategySchema)
         
         self.analyst_chain = create_analyst_prompt() | self.llm | self.analyst_parser
+        self.screener_chain = create_screener_prompt() | self.llm | self.screener_parser
         self.strategy_chain = create_strategy_generator_prompt() | self.llm | self.strategy_parser
         self.risk_chain = create_risk_manager_prompt() | self.llm | self.strategy_parser
 
@@ -63,13 +67,6 @@ class StrategyGenerationGraph(LLMOutputPort):
                 reasoning=s.get("reasoning", "")
             ))
         return strategies
-        self.strategy_parser = JsonOutputParser(pydantic_object=TradeStrategySchema)
-        
-        self.analyst_chain = create_analyst_prompt() | self.llm | self.analyst_parser
-        self.strategy_chain = create_strategy_generator_prompt() | self.llm | self.strategy_parser
-        self.risk_chain = create_risk_manager_prompt() | self.llm | self.strategy_parser
-
-        self.app = self._build_graph()
 
     async def ainvoke(self, inputs: Dict[str, Any]):
         return await self.app.ainvoke(inputs)
@@ -132,15 +129,41 @@ class StrategyGenerationGraph(LLMOutputPort):
         stock_analyses = state.get("stock_analyses", [])
         market_analysis = state.get("market_analysis")
         
-        return {"candidate_stocks": [s.get("symbol") for s in stock_analyses]}
+        candidate_stocks = []
+        market_context_str = f"Market Sentiment Score: {market_analysis.sentiment_score if market_analysis else 0.0}\nSummary: {market_analysis.summary if market_analysis else 'Unknown'}\nPrimary Sectors: {', '.join(market_analysis.primary_sectors) if market_analysis and market_analysis.primary_sectors else 'None'}"
+        
+        for stock_ctx in stock_analyses:
+            context_str = f"Symbol: {stock_ctx.get('symbol')}\nTechnical: {stock_ctx.get('technical_context')}\nMarket Context:\n{market_context_str}"
+            try:
+                result = await self.screener_chain.ainvoke({
+                    "context_data": context_str,
+                    "format_instructions": self.screener_parser.get_format_instructions()
+                })
+                
+                if result.get("is_candidate", False):
+                    candidate_stocks.append(stock_ctx.get("symbol"))
+                    logger.info(f"Screener logic passed for {stock_ctx.get('symbol')} - Reason: {result.get('reasoning')}")
+                else:
+                    logger.info(f"Screener logic rejected {stock_ctx.get('symbol')} - Reason: {result.get('reasoning')}")
+            except Exception as e:
+                logger.error(f"Screener failed for {stock_ctx.get('symbol')}: {e}")
+                # Fallback to include the stock if the screener fails
+                candidate_stocks.append(stock_ctx.get("symbol"))
+                
+        return {"candidate_stocks": candidate_stocks}
 
     async def _strategy_generator_node(self, state: AgentState):
         stock_analyses = state.get("stock_analyses", [])
         market_analysis = state.get("market_analysis")
+        candidate_stocks = state.get("candidate_stocks", [])
         
         generated_strategies = []
         for stock_ctx in stock_analyses:
-            context_str = f"Symbol: {stock_ctx.get('symbol')}\nTechnical: {stock_ctx.get('technical_context')}\nMarket Sentiment: {market_analysis.summary if market_analysis else 'Neutral'}\nSectors: {market_analysis.primary_sectors if market_analysis else []}"
+            symbol = stock_ctx.get('symbol')
+            if symbol not in candidate_stocks:
+                continue
+                
+            context_str = f"Symbol: {symbol}\nTechnical: {stock_ctx.get('technical_context')}\nMarket Sentiment: {market_analysis.summary if market_analysis else 'Neutral'}\nSectors: {market_analysis.primary_sectors if market_analysis else []}"
             
             try:
                 result = await self.strategy_chain.ainvoke({

@@ -18,7 +18,12 @@ addopts = "-ra -q -v"
 testpaths = [
     "tests",
 ]
-
 [tool.black]
 line-length = 88
 target-version = ["py310"]
+
+
+[tool.pytest.ini_options]
+env_files = [
+    ".env"
+]
