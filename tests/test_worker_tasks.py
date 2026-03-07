@@ -12,14 +12,14 @@ def test_collect_stock_data_chunk_logic(mock_get_port, mock_service_execute):
     mock_port = MagicMock()
     mock_get_port.return_value = mock_port
 
-    # 2. 태스크 실행 (bind=True이므로 첫 번째 인자로 mock_self 전달)
+    # 2. 태스크 실행 (bind=True이므로 첫 번째 인자로 mock_self 전달, Celery 래퍼를 우회하기 위해 .run() 사용)
     mock_self = MagicMock()
     mock_self.request.id = "tests-task-id"
-    codes = ["005930", "000660"]
+    code = "005930"
 
-    collect_stock_data_chunk(mock_self, StockMarketType.KOSPI, codes)
+    collect_stock_data_chunk.run(mock_self, StockMarketType.KOSPI, code)
 
     # 3. 검증: 서비스의 execute가 쪼개진 심볼들로 잘 호출되었는가?
     mock_service_execute.assert_called_once()
-    args, _ = mock_service_execute.call_args
-    assert len(args[0]) == 2  # Symbol 객체 2개가 전달되었는지 확인
+    args, kwargs = mock_service_execute.call_args
+    assert args[0].code == "005930"  # Symbol 객체가 전달되었는지, 안에 code가 맞는지 검증

@@ -15,15 +15,18 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.pytest.ini_options]
 addopts = "-ra -q -v"
+pythonpath = [
+    "."
+]
 testpaths = [
     "tests",
 ]
-[tool.black]
-line-length = 88
-target-version = ["py310"]
-
-
-[tool.pytest.ini_options]
 env_files = [
     ".env"
 ]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]

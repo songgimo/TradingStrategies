@@ -2,7 +2,7 @@ import pytest
 import hashlib
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-from src.backend.infrastructure.crawler.mk_rss import MKNews, HKNews
+from src.backend.infrastructure.crawler.news_rss import MKNews, HKNews
 from src.backend.domain.entities import News
 from src.backend.domain.reference_data import NewsSourceType
 
@@ -75,7 +75,7 @@ class TestRSSCrawler:
         mock_get.side_effect = [mock_rss_res, mock_content_res]
 
         # 테스트 시점의 날짜를 RSS 데이터와 맞춤 (2026-02-03)
-        with patch("src.backend.infrastructure.crawler.mk_rss.datetime") as mock_datetime:
+        with patch("src.backend.infrastructure.crawler.news_rss.datetime") as mock_datetime:
             mock_datetime.now.return_value.date.return_value = datetime(2026, 2, 3).date()
 
             # When
@@ -88,11 +88,12 @@ class TestRSSCrawler:
             assert news_list[0].source == str(NewsSourceType.MK_STOCK)
             assert news_list[0].id == hashlib.md5("http://test-news.com/123".encode()).hexdigest()
 
-    @patch("src.backend.infrastructure.crawler.mk_rss.MKNews._fetch_single_rss")
+    @patch("src.backend.infrastructure.crawler.news_rss.MKNews._fetch_single_rss")
     def test_fetch_news_calls_all_urls(self, mock_fetch_single, mk_crawler):
         """정의된 모든 RSS URL에 대해 수집을 시도하는지 테스트"""
         # Given
         mock_fetch_single.return_value = [MagicMock(spec=News)]
+        mk_crawler._rss_urls = {"test1": "http://test1", "test2": "http://test2"}  # mock as dict for test or change test
         num_urls = len(mk_crawler._rss_urls)
 
         # When

@@ -2,6 +2,13 @@ import asyncio
 import json
 from src.backend.infrastructure.llm.langgraph_adapter import StrategyGenerationGraph
 
+import pytest
+
+@pytest.fixture
+def graph():
+    return StrategyGenerationGraph()
+
+@pytest.mark.asyncio
 async def test_market_analyst(graph: StrategyGenerationGraph):
     print("=== 1. Testing Market Analyst ===")
     mock_news = [
@@ -19,6 +26,7 @@ async def test_market_analyst(graph: StrategyGenerationGraph):
     print("\n")
 
 
+@pytest.mark.asyncio
 async def test_strategy_generator(graph: StrategyGenerationGraph):
     print("=== 2. Testing Strategy Generator ===")
     mock_context_str = (
@@ -36,6 +44,7 @@ async def test_strategy_generator(graph: StrategyGenerationGraph):
     print("\n")
 
 
+@pytest.mark.asyncio
 async def test_risk_manager(graph: StrategyGenerationGraph):
     print("=== 3. Testing Risk Manager ===")
     mock_strategy = {
@@ -60,12 +69,3 @@ async def test_risk_manager(graph: StrategyGenerationGraph):
     print(json.dumps(result, indent=2, ensure_ascii=False))
     print("\n")
 
-
-async def main():
-    graph = StrategyGenerationGraph()
-    await test_market_analyst(graph)
-    await test_strategy_generator(graph)
-    await test_risk_manager(graph)
-
-if __name__ == "__main__":
-    asyncio.run(main())
